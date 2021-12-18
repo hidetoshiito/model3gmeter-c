@@ -35,6 +35,11 @@
           </v-btn>
         </v-col>
     </v-row>
+    <v-row>
+      <v-col cols="12" sm="12">
+        <Chart :chart-data="data_collection" />
+      </v-col>
+    </v-row>
     <v-row class="text-center">
         <v-col cols="12" sm="3">
           <v-text-field
@@ -52,14 +57,22 @@
           >
           </v-text-field>
         </v-col>
-        <v-col cols="12" sm="3">
-          <v-text-field
-            v-model="g_data.counttime"
-            label="経過時間"
-            disabled
-          >
-          </v-text-field>
-        </v-col>
+      <v-col cols="12" sm="3">
+        <v-text-field
+          v-model="g_data.direction"
+          label="方向変化"
+          disabled
+        >
+        </v-text-field>
+      </v-col>
+      <v-col cols="12" sm="3">
+        <v-text-field
+          v-model="g_data.counttime"
+          label="経過時間"
+          disabled
+        >
+        </v-text-field>
+      </v-col>
       <v-col cols="12">
         <p> {{ gps_data_list }} </p>
       </v-col>
@@ -68,11 +81,13 @@
 </template>
 
 <script>
+import Chart from '@/components/Chart.vue';
+
 export default {
   name: 'Gmeter',
-
+  components: { Chart },
   data: () => ({
-    target_site: 'hoge',
+    data_collection: null,
     gps_data: { heading: 0, speed: 0, timestamp: 0 },
     gps_data_list: [],
     g_data: {
@@ -90,6 +105,8 @@ export default {
     },
   },
   mounted() {
+    console.log('マイナス指定するのでデータは２種類');
+    this.fillData(0, 0);
     console.log(`${this.$vnode.componentOptions.tag} : mounted start`);
     console.log('タイムスタンプに現在時刻を設定');
     const date = new Date();
@@ -98,6 +115,25 @@ export default {
     */
   },
   methods: {
+    fillData(acceleration, yokoG) {
+      this.data_collection = {
+        labels: ['前', '右', '後', '左'],
+        datasets: [
+          {
+            label: 'Gメーター',
+            // 表示を反転
+            data: [(acceleration * -1), (yokoG * -1)],
+            fill: true,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            pointBackgroundColor: 'rgb(255, 99, 132)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(255, 99, 132)',
+          },
+        ],
+      };
+    },
     // GPSデータを配列に入れる
     pushGpsData() {
       console.log('method pushGpsData start');
@@ -107,6 +143,7 @@ export default {
         console.log('リストが２件以上');
         const ret = this.getAccelerationData(this.gps_data_list.slice(-1)[0], this.gps_data_list.slice(-2)[0]);
         this.g_data = ret;
+        this.fillData(this.g_data.acceleration, this.g_data.yokoG);
       }
       console.log('タイムスタンプは現在時刻に再計算する');
       const date = new Date();
@@ -125,6 +162,7 @@ export default {
       const acceleration = (nms - bms) / counttime;
       console.log(`加速度: ${acceleration}`);
       /* */
+      console.log('横G算出');
       console.log('方向変化算出');
       const nhd = parseInt(now.heading, 0);
       const bhd = parseInt(before.heading, 0);
@@ -143,16 +181,18 @@ export default {
         direction = direction1;
       }
       console.log(`方向変化量(+が右、-が左): ${direction}`);
-      console.log('横G算出(適当,根拠なし)');
       let yokoG = 0;
       if (direction !== 0) {
-        const nondirectionvolume = 181 - Math.abs(direction / counttime);
-        yokoG = (nms * nms) / (nondirectionvolume / 2);
-        if (direction < 0) {
-          yokoG *= -1;
-        }
+        const direction_per_sec = (direction / counttime);
+        console.log(`1秒あたりの方向変化量: ${direction_per_sec}`);
+        const circuit = (360 / direction_per_sec) * nms;
+        console.log(`円周の距離(m)を算出: ${circuit}`);
+        const radius = (circuit / 2) / 3.14;
+        console.log(`円の半径(m)を算出: ${radius}`);
+        console.log('横Gは速度の2乗 / カーブの半径');
+        yokoG = (nms * nms) / radius;
+        console.log(`横G(m/s)を算出: ${yokoG}`);
       }
-      console.log(`横G(+が右、-が左): ${yokoG}`);
       return {
         counttime,
         direction,

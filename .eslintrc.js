@@ -11,6 +11,7 @@ module.exports = {
     parser: 'babel-eslint',
   },
   rules: {
+    camelcase: 'off',
     // console, debuggerは書いて良い(build時に消す設定にしているので)
     'no-console': 'off',
     'no-debugger': 'off',
