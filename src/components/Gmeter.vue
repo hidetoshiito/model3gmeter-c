@@ -1,77 +1,56 @@
 <template>
   <v-container>
     <v-row>
-        <v-col cols="12" sm="3">
-          <v-text-field
-            v-model="gps_data.heading"
-            label="向き"
-            outlined
-          >
-          </v-text-field>
-        </v-col>
-        <v-col cols="12" sm="3">
-          <v-text-field
-            v-model="gps_data.speed"
-            label="スピード"
-            outlined
-          >
-          </v-text-field>
-        </v-col>
-        <v-col cols="12" sm="3">
-          <v-text-field
-            v-model="gps_data.timestamp"
-            label="タイムスタンプ"
-            outlined
-          >
-          </v-text-field>
-        </v-col>
-        <v-col cols="12" sm="3">
-          <v-btn
-            x-large
-            color="success"
-            @click="pushGpsData()"
-          >
-            セット
-          </v-btn>
-        </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12" sm="12">
+      <v-col cols="12" sm="8">
         <Chart :chart-data="data_collection" />
       </v-col>
     </v-row>
     <v-row class="text-center">
-        <v-col cols="12" sm="3">
-          <v-text-field
-            v-model="g_data.yokoG"
-            label="横加速度"
-            disabled
-          >
-          </v-text-field>
+        <v-col cols="12" sm="2">
+          <v-text-field v-model="g_data.yokoG" label="横加速度(m/s)" disabled />
         </v-col>
-        <v-col cols="12" sm="3">
-          <v-text-field
-            v-model="g_data.acceleration"
-            label="前後加速度"
-            disabled
-          >
-          </v-text-field>
+        <v-col cols="12" sm="2">
+          <v-text-field v-model="g_data.acceleration" label="前後加速度(m/s)" disabled />
         </v-col>
-      <v-col cols="12" sm="3">
-        <v-text-field
-          v-model="g_data.direction"
-          label="方向変化"
-          disabled
-        >
-        </v-text-field>
+      <v-col cols="12" sm="2">
+        <v-text-field v-model="g_data.direction" label="方向変化" disabled />
+      </v-col>
+      <v-col cols="12" sm="2">
+        <v-text-field v-model="gps_data.speed" label="スピード(km/h)" disabled />
       </v-col>
       <v-col cols="12" sm="3">
-        <v-text-field
-          v-model="g_data.counttime"
-          label="経過時間"
-          disabled
-        >
-        </v-text-field>
+        <v-text-field v-model="g_data.counttime" label="経過時間(s)" disabled />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12" sm="3">
+        <v-btn x-large color="primary" :loading="running" :disabled="running" @click="startTeslaApi()">
+          スタート
+        </v-btn>
+      </v-col>
+      <v-col cols="12" sm="3">
+        <v-btn x-large color="warning" :disabled="!running" @click="stopTeslaApi()">
+          ストップ
+        </v-btn>
+      </v-col>
+      <v-col cols="12" sm="3">
+        <v-text-field v-model="interval" label="ポーリンク間隔(ms)" outlined />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12" sm="3">
+        <v-text-field v-model="gps_data.heading" label="向き" outlined />
+      </v-col>
+      <v-col cols="12" sm="3">
+        <v-text-field v-model="gps_data.speed" label="スピード" outlined />
+      </v-col>
+      <v-col cols="12" sm="3">
+        <v-text-field v-model="gps_data.timestamp" label="タイムスタンプ" outlined />
+      </v-col>
+      <v-col cols="12" sm="3">
+        <v-btn x-large color="success" @click="pushGpsData()">
+          ダミーデータセット
+        </v-btn>
       </v-col>
       <v-col cols="12">
         <p> {{ gps_data_list }} </p>
@@ -88,6 +67,8 @@ export default {
   name: 'Gmeter',
   components: { Chart },
   data: () => ({
+    running: false,
+    interval: 10000,
     data_collection: null,
     gps_data: { heading: 0, speed: 0, timestamp: 0 },
     gps_data_list: [],
@@ -112,37 +93,56 @@ export default {
     console.log('タイムスタンプに現在時刻を設定');
     const date = new Date();
     this.gps_data.timestamp = Math.floor(date.getTime() / 1000);
-    /*
-    */
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    console.log(`取得パラメタ: ${token}`);
-    console.log('id情報取得');
-    axios.get(`http://52.194.65.131:3000?token=${token}`, {})
-      .then((response) => {
-        // 処理成功2xx時のコールバック
-        console.dir(response.data);
-        // this.nakcat_results = response.data;
-        // this.loading_member.nakcat = false;
-      })
-      .catch((error) => {
-        // 処理失敗!not2xx時のコールバック
-        console.error(error);
-        // this.nakcat_results = { msg: 'エラー' };
-        // this.loading_member.nakcat = false;
-      });
   },
   methods: {
+    // teslaAPIの取得開始
+    startTeslaApi() {
+      console.log('method startTeslaApi start');
+      this.running = true;
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      this.loopTeslaApi(token, '')
+        .catch((error) => {
+          console.log(error);
+          this.running = false;
+        });
+    },
+    async loopTeslaApi(token, id) {
+      console.log('method loopTeslaApi start');
+      if (!this.running) { throw new Error('処理終了フラグ検知!!'); }
+      const response = await axios.get(`http://52.194.65.131:3000?token=${token}&id=${id}`, {});
+      console.dir(response.data);
+      if (!response.data.drive_state.speed) { throw new Error('データ取得失敗による失敗!!'); }
+      // 取得したGPSデータ
+      this.gps_data.speed = response.data.drive_state.speed;
+      this.gps_data.heading = response.data.drive_state.heading;
+      this.gps_data.timestamp = response.data.drive_state.timestamp;
+      const res_id = response.data.id;
+      this.gps_data_list.push({ ...this.gps_data });
+      console.log('リストが２件以上なら加速度を計算する');
+      if (this.gps_data_list.length >= 2) {
+        console.log('リストが２件以上');
+        const ret = this.getAccelerationData(this.gps_data_list.slice(-1)[0], this.gps_data_list.slice(-2)[0]);
+        this.g_data = ret;
+        this.fillData(this.g_data.acceleration, this.g_data.yokoG);
+      }
+      await new Promise((resolve) => setTimeout(resolve, this.interval));
+      await this.loopTeslaApi(token, res_id);
+    },
+    stopTeslaApi() {
+      this.running = false;
+    },
+    // レーダーチャートに加速度情報を設定
     fillData(acceleration, yokoG) {
       this.data_collection = {
         labels: ['前', '右', '後', '左'],
         datasets: [
           {
             label: 'Gメーター',
-            // 表示を反転
-            data: [(acceleration * -1), (yokoG * -1)],
+            // 表示を反転かつマイナス値もあるので実質２値
+            data: [(acceleration * -1), (yokoG * -1), 0, 0],
             fill: true,
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            backgroundColor: 'rgba(255,99,132,0.2)',
             borderColor: 'rgba(255, 99, 132, 1)',
             pointBackgroundColor: 'rgb(255, 99, 132)',
             pointBorderColor: '#fff',

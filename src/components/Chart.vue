@@ -11,7 +11,7 @@ export default {
       options: {
         elements: {
           line: {
-            borderWidth: 3,
+            borderWidth: 2,
           },
         },
         scale: {
