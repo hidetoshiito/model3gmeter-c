@@ -17,7 +17,7 @@ export default {
         scale: {
           ticks: {
             min: 0,
-            max: 8,
+            max: 6,
             stepSize: 2,
           },
         },

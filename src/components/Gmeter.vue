@@ -81,6 +81,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import Chart from '@/components/Chart.vue';
 
 export default {
@@ -113,6 +114,23 @@ export default {
     this.gps_data.timestamp = Math.floor(date.getTime() / 1000);
     /*
     */
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    console.log(`取得パラメタ: ${token}`);
+    console.log('id情報取得');
+    axios.get(`http://52.194.65.131:3000?token=${token}`, {})
+      .then((response) => {
+        // 処理成功2xx時のコールバック
+        console.dir(response.data);
+        // this.nakcat_results = response.data;
+        // this.loading_member.nakcat = false;
+      })
+      .catch((error) => {
+        // 処理失敗!not2xx時のコールバック
+        console.error(error);
+        // this.nakcat_results = { msg: 'エラー' };
+        // this.loading_member.nakcat = false;
+      });
   },
   methods: {
     fillData(acceleration, yokoG) {
