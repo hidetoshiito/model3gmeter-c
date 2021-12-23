@@ -34,7 +34,13 @@
         </v-btn>
       </v-col>
       <v-col cols="12" sm="3">
-        <v-text-field v-model="interval" label="ポーリンク間隔(ms)" outlined />
+        <v-slider
+          v-model="interval"
+          label="ポーリンク間隔(s)"
+          max="10"
+          min="0"
+          thumb-label
+        ></v-slider>
       </v-col>
     </v-row>
     <v-row>
@@ -68,7 +74,7 @@ export default {
   components: { Chart },
   data: () => ({
     running: false,
-    interval: 10000,
+    interval: 10,
     data_collection: null,
     gps_data: { heading: 0, speed: 0, timestamp: 0 },
     gps_data_list: [],
@@ -110,13 +116,14 @@ export default {
     async loopTeslaApi(token, id) {
       console.log('method loopTeslaApi start');
       if (!this.running) { throw new Error('処理終了フラグ検知!!'); }
-      const response = await axios.get(`http://52.194.65.131:3000?token=${token}&id=${id}`, {});
+      const response = await axios.get(`http://gmeter.lightsail.int-inc.ninja:3000?token=${token}&id=${id}`, {});
       console.dir(response.data);
-      if (!response.data.drive_state.speed) { throw new Error('データ取得失敗による失敗!!'); }
+      if (!response.data.drive_state.timestamp) { throw new Error('データ取得失敗による失敗!!'); }
       // 取得したGPSデータ
       this.gps_data.speed = response.data.drive_state.speed;
       this.gps_data.heading = response.data.drive_state.heading;
-      this.gps_data.timestamp = response.data.drive_state.timestamp;
+      console.log('時間はmsでくるのでsにする');
+      this.gps_data.timestamp = Math.round(response.data.drive_state.timestamp / 1000);
       const res_id = response.data.id;
       this.gps_data_list.push({ ...this.gps_data });
       console.log('リストが２件以上なら加速度を計算する');
@@ -126,7 +133,7 @@ export default {
         this.g_data = ret;
         this.fillData(this.g_data.acceleration, this.g_data.yokoG);
       }
-      await new Promise((resolve) => setTimeout(resolve, this.interval));
+      await new Promise((resolve) => setTimeout(resolve, (this.interval * 1000 + 500)));
       await this.loopTeslaApi(token, res_id);
     },
     stopTeslaApi() {
