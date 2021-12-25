@@ -1,22 +1,22 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12" sm="8">
+      <v-col cols="12" sm="10">
         <Chart :chart-data="data_collection" />
       </v-col>
     </v-row>
     <v-row class="text-center">
-        <v-col cols="12" sm="2">
-          <v-text-field v-model="g_data.yokoG" label="横加速度(m/s)" disabled />
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field v-model="g_data.acceleration" label="前後加速度(m/s)" disabled />
-        </v-col>
-      <v-col cols="12" sm="2">
-        <v-text-field v-model="g_data.direction" label="方向変化" disabled />
-      </v-col>
       <v-col cols="12" sm="2">
         <v-text-field v-model="gps_data.speed" label="スピード(km/h)" disabled />
+      </v-col>
+      <v-col cols="12" sm="2">
+        <v-text-field v-model="g_data.yokoG" label="横加速度(m/s)" disabled />
+      </v-col>
+      <v-col cols="12" sm="2">
+        <v-text-field v-model="g_data.acceleration" label="前後加速度(m/s)" disabled />
+      </v-col>
+      <v-col cols="12" sm="2">
+        <v-text-field v-model="g_data.direction" label="方向変化" disabled />
       </v-col>
       <v-col cols="12" sm="3">
         <v-text-field v-model="g_data.counttime" label="経過時間(s)" disabled />
@@ -120,7 +120,8 @@ export default {
       console.dir(response.data);
       if (!response.data.drive_state.timestamp) { throw new Error('データ取得失敗による失敗!!'); }
       // 取得したGPSデータ
-      this.gps_data.speed = response.data.drive_state.speed;
+      // 速度はマイルで来るのでkm/hにする
+      this.gps_data.speed = response.data.drive_state.speed * 1.61;
       this.gps_data.heading = response.data.drive_state.heading;
       console.log('時間はmsでくるのでsにする');
       this.gps_data.timestamp = Math.round(response.data.drive_state.timestamp / 1000);
