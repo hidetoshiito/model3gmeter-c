@@ -10,8 +10,12 @@ export default {
     return {
       options: {
         elements: {
+          point: {
+            radius: 10,
+            hoverRadius: 10,
+          },
           line: {
-            borderWidth: 2,
+            borderWidth: 5,
           },
         },
         scale: {
