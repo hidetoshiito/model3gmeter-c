@@ -12,7 +12,7 @@ export default {
         elements: {
           point: {
             radius: 10,
-            hoverRadius: 10,
+            hoverRadius: 8,
           },
           line: {
             borderWidth: 5,
