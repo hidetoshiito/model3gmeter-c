@@ -15,7 +15,7 @@ export default {
             hoverRadius: 8,
           },
           line: {
-            borderWidth: 5,
+            borderWidth: 10,
           },
         },
         scale: {
