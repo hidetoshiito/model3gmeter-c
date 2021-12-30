@@ -134,7 +134,7 @@ export default {
         this.g_data = ret;
         this.fillData(this.g_data.acceleration, this.g_data.yokoG);
       }
-      await new Promise((resolve) => setTimeout(resolve, (this.interval * 1000 + 500)));
+      await new Promise((resolve) => setTimeout(resolve, (this.interval * 1000)));
       await this.loopTeslaApi(token, res_id);
     },
     stopTeslaApi() {
