@@ -86,11 +86,6 @@ export default {
     },
   }),
   computed: {
-    // GMeter結果表示
-    gDataResultList() {
-      console.log('gDataResultList start');
-      return 0;
-    },
   },
   mounted() {
     console.log('マイナス指定するのでデータは２種類');
@@ -123,15 +118,14 @@ export default {
       // 速度はマイルで来るのでkm/hにする
       this.gps_data.speed = response.data.drive_state.speed * 1.61;
       this.gps_data.heading = response.data.drive_state.heading;
-      console.log('時間はmsでくるのでsにする');
-      this.gps_data.timestamp = Math.round(response.data.drive_state.timestamp / 1000);
+      console.log('時間はmsでくる');
+      this.gps_data.timestamp = response.data.drive_state.timestamp;
       const res_id = response.data.id;
       this.gps_data_list.push({ ...this.gps_data });
       console.log('リストが２件以上なら加速度を計算する');
       if (this.gps_data_list.length >= 2) {
         console.log('リストが２件以上');
-        const ret = this.getAccelerationData(this.gps_data_list.slice(-1)[0], this.gps_data_list.slice(-2)[0]);
-        this.g_data = ret;
+        this.g_data = this.getAccelerationData(this.gps_data_list.slice(-1)[0], this.gps_data_list.slice(-2)[0]);
         this.fillData(this.g_data.acceleration, this.g_data.yokoG);
       }
       await new Promise((resolve) => setTimeout(resolve, (this.interval * 1000)));
@@ -167,13 +161,12 @@ export default {
       console.log('リストが２件以上なら加速度を計算する');
       if (this.gps_data_list.length >= 2) {
         console.log('リストが２件以上');
-        const ret = this.getAccelerationData(this.gps_data_list.slice(-1)[0], this.gps_data_list.slice(-2)[0]);
-        this.g_data = ret;
+        this.g_data = this.getAccelerationData(this.gps_data_list.slice(-1)[0], this.gps_data_list.slice(-2)[0]);
         this.fillData(this.g_data.acceleration, this.g_data.yokoG);
       }
       console.log('タイムスタンプは現在時刻に再計算する');
       const date = new Date();
-      this.gps_data.timestamp = Math.floor(date.getTime() / 1000);
+      this.gps_data.timestamp = date.getTime();
     },
     getAccelerationData(now, before) {
       console.log('method getAccelerationData start');
@@ -182,8 +175,9 @@ export default {
       const bms = (before.speed * 1000) / 60 / 60;
       console.log(`now: ${nms}`);
       console.log(`before: ${bms}`);
-      const counttime = now.timestamp - before.timestamp;
-      console.log(`経過時間: ${counttime}`);
+      console.log('timestampはmsなのでsにする');
+      const counttime = (now.timestamp - before.timestamp) / 1000;
+      console.log(`経過時間(s): ${counttime}`);
       console.log('現在の速度(m/s) - 以前の速度(m/s) / 経過時間(s) = 加速度(m/s)');
       const acceleration = (nms - bms) / counttime;
       console.log(`加速度: ${acceleration}`);
