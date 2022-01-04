@@ -111,7 +111,7 @@ export default {
     async loopTeslaApi(token, id) {
       console.log('method loopTeslaApi start');
       if (!this.running) { throw new Error('処理終了フラグ検知!!'); }
-      const response = await axios.get(`http://gmeter.lightsail.int-inc.ninja:3000?token=${token}&id=${id}`, {});
+      const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}?token=${token}&id=${id}`, {});
       console.dir(response.data);
       if (!response.data.drive_state.timestamp) { throw new Error('データ取得失敗による失敗!!'); }
       // 取得したGPSデータ
