@@ -1,5 +1,10 @@
 # gmeter
 
+#### aws-nanoなどでメモリ不足の場合、swap割当や、必要に応じて以下の設定を実施
+```
+export NODE_OPTIONS="--max-old-space-size=1024"
+```
+
 ## Project setup
 ```
 npm install

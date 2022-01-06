@@ -93,7 +93,7 @@ export default {
     console.log(`${this.$vnode.componentOptions.tag} : mounted start`);
     console.log('タイムスタンプに現在時刻を設定');
     const date = new Date();
-    this.gps_data.timestamp = Math.floor(date.getTime() / 1000);
+    this.gps_data.timestamp = Math.floor(date.getTime());
   },
   methods: {
     // teslaAPIの取得開始
@@ -101,7 +101,7 @@ export default {
       console.log('method startTeslaApi start');
       this.running = true;
       const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
+      const token = urlParams.get('token') ? urlParams.get('token') : '';
       this.loopTeslaApi(token, '')
         .catch((error) => {
           console.log(error);
